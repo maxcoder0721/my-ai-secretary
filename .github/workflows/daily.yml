@@ -56,7 +56,7 @@ jobs:
           PY
 
       - name: Run daily secretary
-       # if: steps.gate.outputs.send == 'true'
+        if: steps.gate.outputs.send == 'true'
         run: python main.py
 
       - name: Skip (not 7am Paris)
