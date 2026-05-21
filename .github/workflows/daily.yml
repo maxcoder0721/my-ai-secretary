@@ -1,11 +1,11 @@
 name: Daily Secretary
 
-# Runs at 5:00 UTC (=07:00 Paris in summer) and 6:00 UTC (=07:00 Paris in winter).
-# main.py only sends if the Paris-local hour is 7, so exactly one email lands per day.
+# Runs once a day at 5:17 UTC.
+# Summer (CEST): ~07:17 Paris.  Winter (CET): ~06:17 Paris.
+# Using :17 instead of :00 to dodge GitHub Actions cron congestion.
 on:
   schedule:
-    - cron: "0 5 * * *"
-    - cron: "0 6 * * *"
+    - cron: "17 5 * * *"
   workflow_dispatch: {}   # lets you trigger manually from the Actions tab
 
 jobs:
@@ -41,24 +41,5 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Gate by Paris local hour
-        id: gate
-        run: |
-          python - <<'PY'
-          import os
-          from datetime import datetime
-          import pytz
-          paris_hour = datetime.now(pytz.timezone("Europe/Paris")).hour
-          send = (paris_hour == 7)
-          print(f"Paris hour={paris_hour}, send={send}")
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-              f.write(f"send={'true' if send else 'false'}\n")
-          PY
-
       - name: Run daily secretary
-        if: steps.gate.outputs.send == 'true'
         run: python main.py
-
-      - name: Skip (not 7am Paris)
-        if: steps.gate.outputs.send != 'true'
-        run: echo "Skipped — not 7am Paris local time."
